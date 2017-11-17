@@ -12,7 +12,7 @@ func TestSmsSending(t *testing.T) {
 	defer logger.Sync()
 
 	sms := SMS{}
-	json.Unmarshal([]byte("{\"from\": \"somebody\",\n\"to\": \"12125551234\",\n\"text\": \"tstmsg\"}"), &sms)
+	json.Unmarshal([]byte("{\"from\": \"somebody\",\n\"to\": [\"12125551234\"],\n\"text\": \"tstmsg\"}"), &sms)
 
 	res, err := sms.Send(logger)
 	if err != nil {

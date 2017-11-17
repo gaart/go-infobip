@@ -15,14 +15,18 @@ const (
 
 type SMS struct {
 	From string `json:"from"`
-	To   string `json:"to"`
+	To   []string `json:"to"`
 	Text string `json:"text"`
+}
 
-	payload string
+func (s *SMS) String() string {
+	text, _ := json.Marshal(s)
+	return string(text)
 }
 
 type SmsApiResponse struct {
 	Messages []struct {
+		BulkId string `json:"bulkId"`
 		To     string `json:"to"`
 		Status struct {
 			GroupId     int    `json:"groupId"`
@@ -36,28 +40,9 @@ type SmsApiResponse struct {
 	} `json:"messages"`
 }
 
-func (s *SMS) setPayload() error {
-
-	body := map[string]string{
-		"from": s.From,
-		"to":   s.To,
-		"text": s.Text,
-	}
-
-	data, err := json.Marshal(body)
-	if err == nil {
-		s.payload = string(data)
-	}
-	return err
-}
-
 func (s *SMS) Send(logger *zap.Logger) (*SmsApiResponse, error) {
 
-	if err := s.setPayload(); err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", SmsApiUrl, strings.NewReader(s.payload))
+	req, err := http.NewRequest("POST", SmsApiUrl, strings.NewReader(s.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +66,7 @@ func (s *SMS) Send(logger *zap.Logger) (*SmsApiResponse, error) {
 	json.Unmarshal([]byte(responseData), &res)
 
 	logger.Info("processed SMS",
+		zap.Reflect("payload", s),
 		zap.Reflect("api_response", res),
 	)
 
