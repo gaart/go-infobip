@@ -48,7 +48,7 @@ func (c *Client) DoRequest(method string, path string, payload io.Reader, result
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Cache-Control", "no-cache")
-	req.Header.Add("User-Agent", "infobip-api-go-client/0.1")
+	req.Header.Add("User-Agent", "go-infobip/0.1")
 
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
@@ -105,6 +105,10 @@ func (c *Client) SendSMS(sms *SMS) (*SmsResponse, error) {
 	err := c.DoRequest("POST", c.BaseURL+smsEndpoint, sms.Buffer(), &res)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(res.Messages) < 1 {
+		return nil, errors.Errorf("Couldn't send a message: %+v", res)
 	}
 
 	return &res, nil
