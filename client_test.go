@@ -47,17 +47,17 @@ func TestSmsClient(t *testing.T) {
 		t.Fatalf("no messages in response: %+v", res)
 	}
 
-	if len(res.Messages[0].MessageId) < 1 {
+	if len(res.Messages[0].MessageID) < 1 {
 		t.Fatalf("no message ID: %+v", res)
 	}
 
 	time.Sleep(10 * time.Second)
 
-	messageId := res.Messages[0].MessageId
+	messageID := res.Messages[0].MessageID
 
 	fmt.Printf("\n%v", res)
 
-	deliveryResults, err := client.GetDeliveryReport(messageId)
+	deliveryResults, err := client.GetDeliveryReport(messageID)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -67,7 +67,7 @@ func TestSmsClient(t *testing.T) {
 		t.Fatalf("Must include at least one delivery report")
 	}
 
-	if len(deliveryResults.Results[0].MessageId) < 1 {
+	if len(deliveryResults.Results[0].MessageID) < 1 {
 		t.Fatalf("Message ID not found for delivery report")
 	}
 }

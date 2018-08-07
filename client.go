@@ -12,11 +12,13 @@ const reportsEndpoint = "/sms/1/reports"
 const smsEndpoint = "/sms/1/text/single"
 const sessionEndpoint = "/auth/1/session"
 
+// Client is the top-level client.
 type Client struct {
 	authenticator Auth
 	BaseURL       string
 }
 
+// NewClient is the constructor for the Client.
 func NewClient(username, password string) (*Client, error) {
 
 	if len(username) < 1 || len(password) < 1 {
@@ -27,7 +29,7 @@ func NewClient(username, password string) (*Client, error) {
 		BaseURL: "https://api.infobip.com",
 	}
 
-	err := client.Authenticate(username, password)
+	err := client.authenticate(username, password)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +37,7 @@ func NewClient(username, password string) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) DoRequest(method string, path string, payload io.Reader, result interface{}) error {
+func (c *Client) doRequest(method string, path string, payload io.Reader, result interface{}) error {
 
 	req, err := http.NewRequest(method, path, payload)
 	if err != nil {
@@ -43,7 +45,7 @@ func (c *Client) DoRequest(method string, path string, payload io.Reader, result
 	}
 
 	if len(c.authenticator.Token) > 0 {
-		c.authenticator.SetAuth(req)
+		c.authenticator.setAuth(req)
 	}
 
 	req.Header.Add("Content-Type", "application/json")
@@ -64,10 +66,10 @@ func (c *Client) DoRequest(method string, path string, payload io.Reader, result
 
 	err = json.NewDecoder(resp.Body).Decode(result)
 
-	return nil
+	return err
 }
 
-func (c *Client) Authenticate(username, password string) error {
+func (c *Client) authenticate(username, password string) error {
 
 	data, err := json.Marshal(map[string]string{
 		"username": username,
@@ -78,7 +80,7 @@ func (c *Client) Authenticate(username, password string) error {
 	}
 
 	res := Auth{}
-	err = c.DoRequest("POST", c.BaseURL+sessionEndpoint, bytes.NewBuffer(data), &res)
+	err = c.doRequest("POST", c.BaseURL+sessionEndpoint, bytes.NewBuffer(data), &res)
 	if err != nil {
 		return err
 	}
@@ -88,10 +90,11 @@ func (c *Client) Authenticate(username, password string) error {
 	return nil
 }
 
-func (c *Client) GetDeliveryReport(smsId string) (*SmsReportResponse, error) {
+// GetDeliveryReport allows you to get one time delivery reports for sent SMS.
+func (c *Client) GetDeliveryReport(smsID string) (*SmsReportResponse, error) {
 
 	res := SmsReportResponse{}
-	err := c.DoRequest("GET", c.BaseURL+reportsEndpoint+"?messageId="+smsId, nil, &res)
+	err := c.doRequest("GET", c.BaseURL+reportsEndpoint+"?messageId="+smsID, nil, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -99,10 +102,11 @@ func (c *Client) GetDeliveryReport(smsId string) (*SmsReportResponse, error) {
 	return &res, nil
 }
 
+// SendSMS allows you to send a single textual message to array of destination addresses.
 func (c *Client) SendSMS(sms *SMS) (*SmsResponse, error) {
 
 	res := SmsResponse{}
-	err := c.DoRequest("POST", c.BaseURL+smsEndpoint, sms.Buffer(), &res)
+	err := c.doRequest("POST", c.BaseURL+smsEndpoint, sms.buffer(), &res)
 	if err != nil {
 		return nil, err
 	}
