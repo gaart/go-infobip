@@ -48,9 +48,9 @@ fmt.Printf("%+v\n", res)
 To get SMS delivery report:
 
 ```go
-messageId := "123123123"  // SMS ID to check
+messageID := "123123123"  // SMS ID to check
 
-report, err := client.GetDeliveryReport(messageId)
+report, err := client.GetDeliveryReport(messageID)
 if err != nil {
     fmt.Println(err.Error())
 }
