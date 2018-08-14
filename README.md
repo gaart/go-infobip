@@ -1,7 +1,8 @@
 # Infobip API Go client
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/gaart/go-infobip)](https://goreportcard.com/report/github.com/gaart/go-infobip)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GoDoc](https://godoc.org/github.com/gaart/go-infobip?status.svg)](https://godoc.org/github.com/gaart/go-infobip)
+[![license](https://img.shields.io/badge/license-MIT-red.svg)](LICENSE)
 
 Go client library for interacting with Infobip's API.
 
