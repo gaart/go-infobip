@@ -12,10 +12,53 @@ const reportsEndpoint = "/sms/1/reports"
 const smsEndpoint = "/sms/1/text/single"
 const sessionEndpoint = "/auth/1/session"
 
+const apiURL = "https://api.infobip.com"
+
 // Client is the top-level client.
 type Client struct {
 	authenticator Auth
-	BaseURL       string
+	baseURL       string
+}
+
+// Option is a functional option for configuring the API client
+type Option func(*Client) error
+
+// BaseURL allows overriding of API client baseURL for testing
+func BaseURL(baseURL string) Option {
+	return func(c *Client) error {
+		c.baseURL = baseURL
+		return nil
+	}
+}
+
+// parseOptions parses the supplied options functions and returns a configured
+// *Client instance
+func (c *Client) parseOptions(opts ...Option) error {
+	// Range over each options function and apply it to our API type to
+	// configure it. Options functions are applied in order, with any
+	// conflicting options overriding earlier calls.
+	for _, option := range opts {
+		err := option(c)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// New creates a new API client
+func New(opts ...Option) (*Client, error) {
+
+	client := &Client{
+		baseURL: apiURL,
+	}
+
+	if err := client.parseOptions(opts...); err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 // NewClient is the constructor for the Client.
@@ -25,11 +68,12 @@ func NewClient(username, password string) (*Client, error) {
 		return nil, errors.New("username and password must be specified")
 	}
 
-	client := &Client{
-		BaseURL: "https://api.infobip.com",
+	client, err := New()
+	if err != nil {
+		return nil, err
 	}
 
-	err := client.authenticate(username, password)
+	err = client.Authenticate(username, password)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +113,12 @@ func (c *Client) doRequest(method string, path string, payload io.Reader, result
 	return err
 }
 
-func (c *Client) authenticate(username, password string) error {
+// Authenticate allows you to get access token.
+func (c *Client) Authenticate(username, password string) error {
+
+	if len(username) < 1 || len(password) < 1 {
+		return errors.New("username and password must be specified")
+	}
 
 	data, err := json.Marshal(map[string]string{
 		"username": username,
@@ -80,7 +129,7 @@ func (c *Client) authenticate(username, password string) error {
 	}
 
 	res := Auth{}
-	err = c.doRequest("POST", c.BaseURL+sessionEndpoint, bytes.NewBuffer(data), &res)
+	err = c.doRequest("POST", c.baseURL+sessionEndpoint, bytes.NewBuffer(data), &res)
 	if err != nil {
 		return err
 	}
@@ -94,7 +143,7 @@ func (c *Client) authenticate(username, password string) error {
 func (c *Client) GetDeliveryReport(smsID string) (*SmsReportResponse, error) {
 
 	res := SmsReportResponse{}
-	err := c.doRequest("GET", c.BaseURL+reportsEndpoint+"?messageId="+smsID, nil, &res)
+	err := c.doRequest("GET", c.baseURL+reportsEndpoint+"?messageId="+smsID, nil, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +155,7 @@ func (c *Client) GetDeliveryReport(smsID string) (*SmsReportResponse, error) {
 func (c *Client) SendSMS(sms *SMS) (*SmsResponse, error) {
 
 	res := SmsResponse{}
-	err := c.doRequest("POST", c.BaseURL+smsEndpoint, sms.buffer(), &res)
+	err := c.doRequest("POST", c.baseURL+smsEndpoint, sms.buffer(), &res)
 	if err != nil {
 		return nil, err
 	}

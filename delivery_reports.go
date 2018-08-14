@@ -4,6 +4,21 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// Amount is a thin wrapper around decimal to support json unmarshal.
+type Amount struct {
+	decimal.Decimal
+}
+
+// UnmarshalJSON is an implementation of Unmarshaler interface for the Amount type.
+func (a *Amount) UnmarshalJSON(data []byte) error {
+	v, err := decimal.NewFromString(string(data))
+	if err != nil {
+		return err
+	}
+	a.Decimal = v
+	return nil
+}
+
 // SentSmsStatus indicates whether the message is successfully sent,
 // not sent, delivered, not delivered, waiting for delivery or any other possible status.
 type SentSmsStatus struct {
@@ -17,8 +32,8 @@ type SentSmsStatus struct {
 
 // SentSmsPrice is a Sent SMS price info: amount and currency.
 type SentSmsPrice struct {
-	PricePerMessage decimal.Decimal `json:"pricePerMessage"`
-	Currency        string          `json:"currency"`
+	PricePerMessage Amount `json:"pricePerMessage"`
+	Currency        string `json:"currency"`
 }
 
 // SentSmsError indicates whether the error occurred during the query execution.
